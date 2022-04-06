@@ -1,4 +1,5 @@
 #!/bin/bash
+set -x
 
 bridge="br0"
 cidr="192.168.1.0/24"
@@ -66,6 +67,7 @@ function clearIptables() {
 }
 
 function start() {
+    echo "start run script"
     addBridge
 
     setupVeth "ns1" "vns1" "192.168.1.101/24"
@@ -79,6 +81,7 @@ function clear() {
     sudo ip netns del ns2
 
     sudo ip link del ${bridge}
+    clearIptables
 }
 
 while getopts 'rci' opt; do
