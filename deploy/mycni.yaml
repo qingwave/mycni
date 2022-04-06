@@ -1,0 +1,154 @@
+---
+kind: ClusterRole
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: mycni
+rules:
+- apiGroups:
+  - ""
+  resources:
+  - nodes
+  verbs:
+  - list
+  - get
+  - watch
+---
+kind: ClusterRoleBinding
+apiVersion: rbac.authorization.k8s.io/v1
+metadata:
+  name: mycni
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: mycni
+subjects:
+- kind: ServiceAccount
+  name: mycni
+  namespace: kube-system
+---
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: mycni
+  namespace: kube-system
+---
+kind: ConfigMap
+apiVersion: v1
+metadata:
+  name: kube-mycni-cfg
+  namespace: kube-system
+  labels:
+    tier: node
+    app: flannel
+data:
+  cni-conf.json: |
+    {
+      "name": "mycni",
+      "cniVersion": "0.4.0",
+      "type": "mycni",
+      "dataDir": "/var/lib/cni/networks"
+    }
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: kube-mycni-ds
+  namespace: kube-system
+  labels:
+    tier: node
+    app: mycni
+spec:
+  selector:
+    matchLabels:
+      app: mycni
+  template:
+    metadata:
+      labels:
+        tier: node
+        app: mycni
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/os
+                operator: In
+                values:
+                - linux
+      hostNetwork: true
+      priorityClassName: system-node-critical
+      tolerations:
+      - operator: Exists
+        effect: NoSchedule
+      serviceAccountName: mycni
+      initContainers:
+      - name: install-cni-plugin
+        # mycni image
+        image: mycni:v1.0
+        command:
+        - cp
+        args:
+        - -f
+        - /mycni
+        - /opt/cni/bin/mycni
+        volumeMounts:
+        - name: cni-plugin
+          mountPath: /opt/cni/bin
+      - name: install-cni
+        image: mycni:v1.0
+        command:
+        - cp
+        args:
+        - -f
+        - /etc/kube-mycni/cni-conf.json
+        - /etc/cni/net.d/10-mycni.conf
+        volumeMounts:
+        - name: cni
+          mountPath: /etc/cni/net.d
+        - name: mycni-cfg
+          mountPath: /etc/kube-mycni/
+      containers:
+      - name: kube-mycni
+        image: mycni:v1.0
+        command:
+        - /mycnid
+        args:
+        # get cluster cidr from kube-controller-manager
+        - --cluster-cidr=10.244.0.0/16
+        - --node=$(NODE_NAME)
+        - --enable-iptables
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "50Mi"
+          limits:
+            cpu: "100m"
+            memory: "50Mi"
+        securityContext:
+          privileged: false
+          capabilities:
+            add: ["NET_ADMIN", "NET_RAW"]
+        env:
+        - name: NODE_NAME
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        volumeMounts:
+        - name: run
+          mountPath: /run/mycni
+        - name: mycni-cfg
+          mountPath: /etc/kube-mycni/
+      volumes:
+      - name: run
+        hostPath:
+          path: /run/mycni
+      - name: cni-plugin
+        hostPath:
+          path: /opt/cni/bin
+      - name: cni
+        hostPath:
+          path: /etc/cni/net.d
+      - name: mycni-cfg
+        configMap:
+          name: kube-mycni-cfg
