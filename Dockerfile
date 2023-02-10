@@ -10,6 +10,6 @@ RUN CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -mod=vendor -o bin/mycnid 
     CGO_ENABLED=0 GOOS=linux GOARCH=amd64 go build -a -mod=vendor -o bin/mycni cmd/mycni/main.go
 
 FROM alpine
-RUN apk add --no-cache iptables
+RUN apk update && apk add --no-cache iptables
 WORKDIR /
 COPY --from=builder /workspace/bin/* /

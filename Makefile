@@ -1,7 +1,9 @@
 
 .PHONY: build deploy clean
 
-GOBUILD=CGO_ENABLED=0 go build -mod=vendor
+GOARCH ?= $(shell go env GOARCH)
+
+GOBUILD=CGO_ENABLED=0 GOOS=linux GOARCH=$(GOARCH) go build -mod=vendor
 build:
 	$(GOBUILD) -o bin/mycnid cmd/mycnid/main.go
 	$(GOBUILD) -o bin/mycni cmd/mycni/main.go
