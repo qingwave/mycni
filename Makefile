@@ -8,9 +8,10 @@ build:
 	$(GOBUILD) -o bin/mycnid cmd/mycnid/main.go
 	$(GOBUILD) -o bin/mycni cmd/mycni/main.go
 
-VERSION=v1.0
+IMG=qingwave/mycni
+VERSION=v0.1
 docker-build: build
-	docker build -t mycni:$(VERSION) .
+	docker build -t $(IMG):$(VERSION) .
 
 deploy:
 	kubectl apply -f deploy/mycni.yaml
@@ -24,4 +25,4 @@ kind-cluster:
 	kind create cluster --config deploy/kind.yaml
 
 kind-image-load: docker-build
-	kind load docker-image mycni:$(VERSION) 
+	kind load docker-image $(IMG):$(VERSION) 

@@ -96,7 +96,7 @@ spec:
         - name: cni-plugin
           mountPath: /opt/cni/bin
       - name: install-cni
-        image: mycni:v1.0
+        image: qingwave/mycni:v0.1
         command:
         - cp
         args:

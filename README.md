@@ -9,16 +9,34 @@ A simple CNI plugin for kubernetes, similar with Flannel host-gw.
 Network architecture:
 ![mycni-network-arch](./doc/k8s-mycni-arch.png)
 
-## Build
-`make`
+## Quick Start
 
-## Deploy
-`make deploy` or `kubectl apply -f deploy/mycni.yaml`
+Deploy MyCNI into your kubernetes cluster
 
-## Debugs
-`apk update` may failed in Dockerfile:
-```shell
-ERROR: https://dl-cdn.alpinelinux.org/alpine/v3.17/main: temporary error (try again later)
-WARNING: Ignoring https://dl-cdn.alpinelinux.org/alpine/v3.17/main: No such file or directory
+> !!! It will deploy a DaemonSet application in all nodes, please run this in your dev cluster or kind/minikube
+
+```bash
+kubectl apply -f https://raw.githubusercontent.com/qingwave/mycni/main/deploy/mycni.yaml
 ```
-Please see[here](https://github.com/gliderlabs/docker-alpine/issues/386#issuecomment-376523853)
+
+## Develop
+
+It's more easier to use [kind](https://kind.sigs.k8s.io/) cluster for test. Create a kind cluster
+```bash
+make kind-cluster
+```
+
+Build image
+```bash
+make docker-build
+```
+
+Load image into kind cluster [optional]
+```bash
+make kind-image-load
+```
+
+Deploy CNI
+```bash
+make deploy
+```
