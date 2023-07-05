@@ -85,7 +85,7 @@ spec:
       initContainers:
       - name: install-cni-plugin
         # mycni image
-        image: mycni:v1.0
+        image: qingwave/mycni:v0.1
         command:
         - cp
         args:
@@ -110,7 +110,7 @@ spec:
           mountPath: /etc/kube-mycni/
       containers:
       - name: kube-mycni
-        image: mycni:v1.0
+        image: qingwave/mycni:v0.1
         command:
         - /mycnid
         args:
