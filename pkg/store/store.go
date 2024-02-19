@@ -35,8 +35,10 @@ func NewStore(dataDir, network string) (*Store, error) {
 		dataDir = defaultDataDir
 	}
 	dir := filepath.Join(dataDir, network)
-	if err := os.MkdirAll(dir, 0755); err != nil {
-		return nil, err
+	if _, err := os.Stat(dir); os.IsNotExist(err) {
+		if err := os.MkdirAll(dir, 0755); err != nil {
+			return nil, err
+		}
 	}
 
 	fl, err := newFileLock(dir)
